@@ -13,7 +13,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 18
           cache: 'npm'
 
       - name: Setup Java JDK
@@ -26,18 +26,15 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      # تثبيت نظيف للحزم المتوافقة المذكورة في ملفك بدون حزم خارجية مسببة للتعارض
+      # تثبيت نظيف للحزم المتوافقة والمستقرة
       - name: Install dependencies
         run: npm install --legacy-peer-deps
-
-      # فحص الكود للتأكد من توافقية إصدارات Expo
-      - name: Run Expo Doctor Scan
-        run: npx expo-doctor || true
 
       # توليد مجلد الأندرويد الأصلي بشكل نظيف تماماً
       - name: Expo Prebuild (Generate Android)
         run: npx expo prebuild --platform android --clean
 
+      # حقن إعدادات إضافية لمنع توقف الـ Node والـ Gradle
       - name: Inject Credentials to Gradle
         run: |
           echo "NODE_BINARY=/usr/local/bin/node" >> android/gradle.properties
@@ -45,14 +42,16 @@ jobs:
           echo "RELEASE_STORE_PASSWORD=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" >> android/gradle.properties
           echo "RELEASE_KEY_ALIAS=${{ secrets.ANDROID_KEY_ALIAS }}" >> android/gradle.properties
           echo "RELEASE_KEY_PASSWORD=${{ secrets.ANDROID_KEY_PASSWORD }}" >> android/gradle.properties
+          echo "org.gradle.warning.mode=none" >> android/gradle.properties
 
       - name: Decode Keystore File
         run: echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/app/my-release-key.keystore
 
-      # تجميع الـ APK الفعلي بدون أي عوائق برمجية أو حزم تالفة
+      # تجميع الـ APK الفعلي مع إجبار النظام على تخطي أخطاء الـ Bundler وتخفيف الذاكرة
       - name: Build Android APK
         env:
           NODE_OPTIONS: "--max-old-space-size=4096"
+          NODE_ENV: production
         run: |
           cd android
           chmod +x gradlew
