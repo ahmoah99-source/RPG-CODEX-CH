@@ -21,14 +21,14 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Clean Environment
+        run: |
+          rm -rf node_modules
+          rm -rf android
+          npm cache clean --force
 
       - name: Install dependencies
         run: npm install --legacy-peer-deps
-
-      - name: Fix Expo Dependencies Mismatch
-        run: npx expo install --fix
 
       - name: Overwrite Reanimated Bug File
         run: |
@@ -38,7 +38,7 @@ jobs:
           fi
 
       - name: Expo Prebuild (Generate Android)
-        run: npx expo prebuild --platform android
+        run: npx expo prebuild --platform android --clean
 
       - name: Inject Credentials to Gradle
         run: |
@@ -51,18 +51,13 @@ jobs:
       - name: Decode Keystore File
         run: echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/app/my-release-key.keystore
 
-      - name: Run Expo Doctor Scan
-        run: |
-          npx expo install react-native-worklets -- --legacy-peer-deps
-          npx expo-doctor || true
-
       - name: Build Android APK
         run: |
           cd android
           chmod +x gradlew
           ./gradlew clean
-          export NODE_OPTIONS="--max-old-space-size=4048"
-          ./gradlew assembleRelease --quiet --console=plain
+          # إضافة --refresh-dependencies لضمان تحميل نسخة نظيفة من المكتبات
+          ./gradlew assembleRelease --refresh-dependencies --quiet --console=plain
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
