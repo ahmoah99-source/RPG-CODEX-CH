@@ -1,4 +1,4 @@
-name: Build APK Clean Expo Final
+name: Build APK Stable SDK 51
 on:
   push:
     branches: [ main, master ]
@@ -13,56 +13,22 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-
-      - name: Setup Java JDK
-        uses: actions/setup-java@v4
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-
-      - name: Clean Environment
-        run: |
-          rm -rf node_modules
-          rm -rf android
-          npm cache clean --force
+          node-version: 18
 
       - name: Install dependencies
-        run: npm install --legacy-peer-deps
+        run: npm install
 
-      - name: Overwrite Reanimated Bug File (With Safety Check)
-        run: |
-          if [ -f reanimated-fixed.gradle ] && [ -d "node_modules/react-native-reanimated" ]; then
-            echo "Fixing Reanimated Gradle..."
-            mkdir -p node_modules/react-native-reanimated/android/
-            cp reanimated-fixed.gradle node_modules/react-native-reanimated/android/build.gradle
-          else
-            echo "Skipping Reanimated fix: File or directory not found. Continuing build..."
-          fi
-
-      - name: Expo Prebuild (Generate Android)
-        run: npx expo prebuild --platform android --clean
-
-      - name: Inject Credentials to Gradle
-        run: |
-          echo "NODE_BINARY=/usr/local/bin/node" >> android/gradle.properties
-          echo "RELEASE_STORE_FILE=my-release-key.keystore" >> android/gradle.properties
-          echo "RELEASE_STORE_PASSWORD=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" >> android/gradle.properties
-          echo "RELEASE_KEY_ALIAS=${{ secrets.ANDROID_KEY_ALIAS }}" >> android/gradle.properties
-          echo "RELEASE_KEY_PASSWORD=${{ secrets.ANDROID_KEY_PASSWORD }}" >> android/gradle.properties
-
-      - name: Decode Keystore File
-        run: echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/app/my-release-key.keystore
+      - name: Expo Prebuild
+        run: npx expo prebuild --platform android
 
       - name: Build Android APK
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew clean
-          ./gradlew assembleRelease --refresh-dependencies --quiet --console=plain
+          ./gradlew assembleRelease
 
-      - name: Upload APK Artifact
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: RPG-CODEX01-APK
+          name: RPG-APK-STABLE
           path: android/app/build/outputs/apk/release/*.apk
