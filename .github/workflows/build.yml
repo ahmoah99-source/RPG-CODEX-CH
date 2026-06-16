@@ -62,7 +62,7 @@ jobs:
           chmod +x gradlew
           ./gradlew clean
           export NODE_OPTIONS="--max-old-space-size=4096"
-          ./gradlew assembleRelease -x test --no-daemon --no-configuration-cache --no-build-cache --quiet
+          ./gradlew assembleRelease --quiet --console=plain
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
