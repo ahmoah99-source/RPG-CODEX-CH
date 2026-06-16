@@ -30,11 +30,14 @@ jobs:
       - name: Install dependencies
         run: npm install --legacy-peer-deps
 
-      - name: Overwrite Reanimated Bug File
+      - name: Overwrite Reanimated Bug File (With Safety Check)
         run: |
-          if [ -f reanimated-fixed.gradle ]; then
-            chmod +w node_modules/react-native-reanimated/android/build.gradle || true
+          if [ -f reanimated-fixed.gradle ] && [ -d "node_modules/react-native-reanimated" ]; then
+            echo "Fixing Reanimated Gradle..."
+            mkdir -p node_modules/react-native-reanimated/android/
             cp reanimated-fixed.gradle node_modules/react-native-reanimated/android/build.gradle
+          else
+            echo "Skipping Reanimated fix: File or directory not found. Continuing build..."
           fi
 
       - name: Expo Prebuild (Generate Android)
@@ -56,7 +59,6 @@ jobs:
           cd android
           chmod +x gradlew
           ./gradlew clean
-          # إضافة --refresh-dependencies لضمان تحميل نسخة نظيفة من المكتبات
           ./gradlew assembleRelease --refresh-dependencies --quiet --console=plain
 
       - name: Upload APK Artifact
