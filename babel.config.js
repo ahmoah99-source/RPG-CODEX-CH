@@ -5,8 +5,5 @@ module.exports = function (api) {
       ['babel-preset-expo', { jsxImportSource: 'nativewind' }],
       'nativewind/babel',
     ],
-    plugins: [
-      // تضمن هذه الإضافة معالجة التنسيقات والألوان بشكل متوافق مع نظام أندرويد
-    ],
   };
 };
