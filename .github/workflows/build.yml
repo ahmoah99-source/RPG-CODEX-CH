@@ -53,10 +53,10 @@ jobs:
           mkdir -p android
           echo "sdk.dir=$ANDROID_HOME" > android/local.properties
 
-      # حقن إعدادات الأمان والذاكرة (تم إزالة أسطر sed التجريبية القديمة لضمان عدم حدوث تعارض)
+      # حقن إعدادات الأمان والذاكرة مع إجبار السيرفر على النزول لسطر جديد لتفادي التداخل (\n)
       - name: Inject Credentials to Gradle
         run: |
-          echo "NODE_BINARY=$(which node)" >> android/gradle.properties
+          echo -e "\nNODE_BINARY=$(which node)" >> android/gradle.properties
           echo "RELEASE_STORE_FILE=my-release-key.keystore" >> android/gradle.properties
           echo "RELEASE_STORE_PASSWORD=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" >> android/gradle.properties
           echo "RELEASE_KEY_ALIAS=${{ secrets.ANDROID_KEY_ALIAS }}" >> android/gradle.properties
