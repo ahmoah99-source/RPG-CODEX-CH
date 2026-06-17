@@ -24,10 +24,6 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      # الإضافة الأولى: ربط مسار الـ SDK بنظام البناء
-      - name: Create local.properties
-        run: echo "sdk.dir=$ANDROID_HOME" > android/local.properties
-
       - name: Install dependencies
         run: npm install --legacy-peer-deps
 
@@ -41,8 +37,15 @@ jobs:
             cp reanimated-fixed.gradle node_modules/react-native-reanimated/android/build.gradle
           fi
 
+      # خطوة الـ Prebuild أولاً لتوليد مجلد android
       - name: Expo Prebuild (Generate Android)
         run: npx expo prebuild --platform android --clean
+
+      # إنشاء local.properties بعد التأكد من وجود المجلد
+      - name: Create local.properties
+        run: |
+          mkdir -p android
+          echo "sdk.dir=$ANDROID_HOME" > android/local.properties
 
       - name: Inject Credentials to Gradle
         run: |
@@ -60,7 +63,6 @@ jobs:
           npx expo install react-native-worklets -- --legacy-peer-deps
           npx expo-doctor || true
 
-      # الإضافة الثانية: تعديل أمر البناء (إزالة --quiet وإضافة --stacktrace)
       - name: Build Android APK
         run: |
           cd android
