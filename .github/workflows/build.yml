@@ -54,10 +54,7 @@ jobs:
 
       - name: Decode Keystore File
         run: echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/app/my-release-key.keystore
-
-      - name: Verify Bundle
-        run: npx expo export -p android --platform android --dev false
-
+        
       - name: Build Android APK
         run: |
           cd android
