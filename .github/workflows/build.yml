@@ -36,10 +36,6 @@ jobs:
 
       - name: Force Install Reanimated
         run: npm install react-native-reanimated --legacy-peer-deps
-
-      - name: Fix Expo Dependencies Mismatch
-        run: npx expo install --fix
-
       - name: Expo Prebuild (Generate Android)
         run: npx expo prebuild --platform android --clean
 
