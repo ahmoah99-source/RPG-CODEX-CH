@@ -73,8 +73,10 @@ jobs:
           cd android
           chmod +x gradlew
           ./gradlew clean
-          # إضافة --no-bundler لنتخطى خطوة الـ Node التي تفشل دائماً
+          export NODE_OPTIONS="--max-old-space-size=4096"
+          # أضفنا -x bundleReleaseJsAndAssets لمنع الـ Gradle من تشغيل الـ Node
           ./gradlew assembleRelease -x bundleReleaseJsAndAssets -x test --no-daemon --no-configuration-cache --no-build-cache --stacktrace -Dorg.gradle.jvmargs="-Xmx2048m -XX:MaxMetaspaceSize=512m"
+
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
