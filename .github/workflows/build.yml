@@ -27,7 +27,7 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      # تنظيف بيئة العمل وتثبيت المكتبات مع إضافة المكتبة المفقودة المسببة للخطأ
+      # تنظيف بيئة العمل وتثبيت المكتبات مع ربط المسارات الرسمية للمكتبة
       - name: Deep Clean and Install
         run: |
           rm -rf node_modules
@@ -36,8 +36,11 @@ jobs:
           rm -f package-lock.json
           npm cache clean --force
           npm install --legacy-peer-deps
-          # حقن المكتبة المطلوبة لـ SQLite أوفلاين لحل مشكلة البناء مباشرة
+          # 1. تثبيت المكتبة الرسمية المطلوبة أوفلاين
           npm install react-native-worklets-core --legacy-peer-deps
+          
+          # 2. التعديل السحري: ربط المسار القديم بالجديد رسمياً داخل الـ node_modules لتفادي خطأ Babel والـ Bundler
+          ln -s react-native-worklets-core node_modules/react-native-worklets
 
       # توليد مجلد الأندرويد أولاً ليتمكن السيرفر من وضع الملفات بداخله بشكل صحيح
       - name: Expo Prebuild (Generate Android)
