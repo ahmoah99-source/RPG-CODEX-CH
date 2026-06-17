@@ -27,6 +27,10 @@ jobs:
       - name: Install dependencies
         run: npm install --legacy-peer-deps
 
+      # الحل الجذري: تثبيت المكتبة التي تسبب الخطأ بشكل صريح
+      - name: Force Install Reanimated
+        run: npm install react-native-reanimated --legacy-peer-deps
+
       - name: Fix Expo Dependencies Mismatch
         run: npx expo install --fix
 
