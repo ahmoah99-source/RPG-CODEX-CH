@@ -37,11 +37,9 @@ jobs:
             cp reanimated-fixed.gradle node_modules/react-native-reanimated/android/build.gradle
           fi
 
-      # خطوة الـ Prebuild أولاً لتوليد مجلد android
       - name: Expo Prebuild (Generate Android)
         run: npx expo prebuild --platform android --clean
 
-      # إنشاء local.properties بعد التأكد من وجود المجلد
       - name: Create local.properties
         run: |
           mkdir -p android
@@ -62,9 +60,9 @@ jobs:
         run: |
           npx expo install react-native-worklets -- --legacy-peer-deps
           npx expo-doctor || true
-          
+
       - name: Verify Bundle
-        run: npx react-native bundle --platform android --dev false --entry-file index.js --bundle-output android/app/src/main/assets/index.android.bundle --assets-dest android/app/src/main/res
+        run: npx expo export -p android --platform android --dev false
 
       - name: Build Android APK
         run: |
@@ -72,7 +70,7 @@ jobs:
           chmod +x gradlew
           ./gradlew clean
           export NODE_OPTIONS="--max-old-space-size=4096"
-          ./gradlew assembleRelease -x test --no-daemon --no-configuration-cache --no-build-cache --stacktrace
+          ./gradlew assembleRelease -x test --no-daemon --no-configuration-cache --no-build-cache --stacktrace -Dorg.gradle.jvmargs="-Xmx2048m -XX:MaxMetaspaceSize=512m"
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
