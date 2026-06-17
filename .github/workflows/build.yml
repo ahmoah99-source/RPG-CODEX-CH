@@ -27,7 +27,7 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      # تنظيف بيئة العمل وتثبيت المكتبات مع ربط المسارات الرسمية للمكتبة
+      # تنظيف بيئة العمل وتثبيت المكتبات الأساسية والجديدة لـ Kotlin
       - name: Deep Clean and Install
         run: |
           rm -rf node_modules
@@ -38,11 +38,13 @@ jobs:
           npm install --legacy-peer-deps
           # 1. تثبيت المكتبة الرسمية المطلوبة أوفلاين
           npm install react-native-worklets-core --legacy-peer-deps
+          # 2. تثبيت الحزمة المطلوبة للتحكم بخصائص الـ Kotlin التي أضفناها لـ app.json
+          npm install expo-build-properties --legacy-peer-deps
           
-          # 2. التعديل السحري: ربط المسار القديم بالجديد رسمياً داخل الـ node_modules لتفادي خطأ Babel والـ Bundler
+          # 3. ربط المسار القديم بالجديد رسمياً داخل الـ node_modules لتفادي خطأ الـ Bundler
           ln -s react-native-worklets-core node_modules/react-native-worklets
 
-      # توليد مجلد الأندرويد أولاً ليتمكن السيرفر من وضع الملفات بداخله بشكل صحيح
+      # توليد مجلد الأندرويد ليتلقى إصدار Kotlin المحدث (1.9.25) تلقائياً من الإعدادات
       - name: Expo Prebuild (Generate Android)
         run: npx expo prebuild --platform android --clean
 
@@ -51,7 +53,7 @@ jobs:
           mkdir -p android
           echo "sdk.dir=$ANDROID_HOME" > android/local.properties
 
-      # حقن إعدادات الأمان والتحديث الجذري لإصدار الكوتلن داخل ملفات الأندرويد المحدثة
+      # حقن إعدادات الأمان والذاكرة (تم إزالة أسطر sed التجريبية القديمة لضمان عدم حدوث تعارض)
       - name: Inject Credentials to Gradle
         run: |
           echo "NODE_BINARY=$(which node)" >> android/gradle.properties
@@ -60,10 +62,6 @@ jobs:
           echo "RELEASE_KEY_ALIAS=${{ secrets.ANDROID_KEY_ALIAS }}" >> android/gradle.properties
           echo "RELEASE_KEY_PASSWORD=${{ secrets.ANDROID_KEY_PASSWORD }}" >> android/gradle.properties
           echo "org.gradle.jvmargs=-Xmx4608m -XX:MaxMetaspaceSize=512m" >> android/gradle.properties
-          
-          # الحل الجذري: إجبار ملف بناء الأندرويد الرئيسي على ترقية Kotlin إلى 1.9.25 ليتوافق مع الـ Compose
-          sed -i 's/kotlinVersion = "1.9.24"/kotlinVersion = "1.9.25"/g' android/build.gradle || true
-          sed -i 's/kotlin_version = "1.9.24"/kotlin_version = "1.9.25"/g' android/build.gradle || true
           
       - name: Decode Keystore File
         run: |
