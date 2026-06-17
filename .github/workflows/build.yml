@@ -65,6 +65,17 @@ jobs:
           ./gradlew clean
           # تعطيل الـ Bundler تماماً هنا، وتمرير نسخة النود الحالية
           ./gradlew assembleRelease -x bundleReleaseJsAndAssets -x test --no-daemon --stacktrace -Dorg.gradle.jvmargs="-Xmx2048m"
+
+      - name: Show Build Failure Details
+        if: failure()
+        run: |
+          if [ -f android/build/reports/problems/problems-report.html ]; then
+            echo "--- تفاصيل الخطأ الحقيقية ---"
+            cat android/build/reports/problems/problems-report.html
+          else
+            echo "ملف التقرير غير موجود، جاري عرض آخر 50 سطر من الـ Gradle Logs:"
+            tail -n 50 android/gradlew.log || echo "لا يوجد سجلات إضافية."
+          fi
           
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
