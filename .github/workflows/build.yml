@@ -27,8 +27,11 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install dependencies
-        run: npm install --legacy-peer-deps
+      - name: Clean Install dependencies
+        run: |
+          rm -rf node_modules
+          npm cache clean --force
+          npm install --legacy-peer-deps
 
       - name: Force Install Reanimated
         run: npm install react-native-reanimated --legacy-peer-deps
