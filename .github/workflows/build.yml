@@ -36,17 +36,14 @@ jobs:
           npm cache clean --force
           npm install --legacy-peer-deps
 
-      # 1. نقوم بتوليد مجلد الأندرويد أولاً قبل حقن أي ملفات
       - name: Expo Prebuild (Generate Android)
         run: npx expo prebuild --platform android --clean
 
-      # 2. الآن ننشئ ملف local.properties داخل المجلد المولد حديثاً
       - name: Create local.properties
         run: |
           mkdir -p android
           echo "sdk.dir=$ANDROID_HOME" > android/local.properties
 
-      # 3. نحقن إعدادات الـ Keystore والـ SQLite الثنائية داخل مجلد الأندرويد الجديد
       - name: Inject Credentials to Gradle
         run: |
           echo "NODE_BINARY=$(which node)" >> android/gradle.properties
@@ -54,24 +51,22 @@ jobs:
           echo "RELEASE_STORE_PASSWORD=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" >> android/gradle.properties
           echo "RELEASE_KEY_ALIAS=${{ secrets.ANDROID_KEY_ALIAS }}" >> android/gradle.properties
           echo "RELEASE_KEY_PASSWORD=${{ secrets.ANDROID_KEY_PASSWORD }}" >> android/gradle.properties
-          # لتسريع البناء وحل مشاكل الذاكرة مع SQLite أضفنا هذه الأسطر:
           echo "org.gradle.jvmargs=-Xmx4608m -XX:MaxMetaspaceSize=512m" >> android/gradle.properties
 
-      # 4. فك تشفير ملف الـ Keystore في مساره الصحيح تماماً
       - name: Decode Keystore File
         run: |
           mkdir -p android/app
           echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/app/my-release-key.keystore
         
-      # 5. تشغيل البناء مع تخطي فحص الأخطاء غير القاتلة (Lint) لضمان خروج الـ APK
       - name: Build Android APK
+        env:
+          NODE_ENV: production
         run: |
           cd android
           chmod +x gradlew
           ./gradlew clean
-          ./gradlew assembleRelease --no-daemon -x lint --stacktrace
+          NODE_ENV=production ./gradlew assembleRelease --no-daemon -x lint --stacktrace
    
-      # 6. طباعة الخطأ الحقيقي فقط (آخر 200 سطر من الـ Gradle) بدلاً من البحث في كل السيرفر
       - name: Show Build Failure Details
         if: failure()
         run: |
