@@ -51,7 +51,7 @@ jobs:
           mkdir -p android
           echo "sdk.dir=$ANDROID_HOME" > android/local.properties
 
-      # حقن إعدادات الأمان ومفاتيح التوقيع والذاكرة لتفادي توقف السيرفر
+      # حقن إعدادات الأمان ومفاتيح التوقيع والذاكرة وحل مشكلة إصدار كوتلن
       - name: Inject Credentials to Gradle
         run: |
           echo "NODE_BINARY=$(which node)" >> android/gradle.properties
@@ -60,6 +60,9 @@ jobs:
           echo "RELEASE_KEY_ALIAS=${{ secrets.ANDROID_KEY_ALIAS }}" >> android/gradle.properties
           echo "RELEASE_KEY_PASSWORD=${{ secrets.ANDROID_KEY_PASSWORD }}" >> android/gradle.properties
           echo "org.gradle.jvmargs=-Xmx4608m -XX:MaxMetaspaceSize=512m" >> android/gradle.properties
+          # الأسطر التالية لتخطي مشكلة توافق إصدار Kotlin وإجبار الأندرويد على البناء بنجاح
+          echo "kotlin.suppressKotlinVersionCompatibilityCheck=true" >> android/gradle.properties
+          echo "android.enableJetifier=true" >> android/gradle.properties
 
       - name: Decode Keystore File
         run: |
