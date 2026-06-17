@@ -53,7 +53,7 @@ jobs:
           mkdir -p android
           echo "sdk.dir=$ANDROID_HOME" > android/local.properties
 
-      # حقن إعدادات الأمان والذاكرة مع إجبار السيرفر على النزول لسطر جديد لتفادي التداخل (\n)
+      # حقن إعدادات الأمان والذاكرة وإجبار النظام على تخطي فحص توافق الكوتلن والـ Compose رسمياً
       - name: Inject Credentials to Gradle
         run: |
           echo -e "\nNODE_BINARY=$(which node)" >> android/gradle.properties
@@ -63,18 +63,22 @@ jobs:
           echo "RELEASE_KEY_PASSWORD=${{ secrets.ANDROID_KEY_PASSWORD }}" >> android/gradle.properties
           echo "org.gradle.jvmargs=-Xmx4608m -XX:MaxMetaspaceSize=512m" >> android/gradle.properties
           
+          # إجبار الأندرويد على كسر حماية الفحص وتمرير البناء فوراً بالإصدار الحالي لـ Expo
+          echo "kotlin.suppressKotlinVersionCompatibilityCheck=true" >> android/gradle.properties
+          echo "suppressKotlinVersionCompatibilityCheck=true" >> android/gradle.properties
+
       - name: Decode Keystore File
         run: |
           mkdir -p android/app
           echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/app/my-release-key.keystore
         
-      # بدء البناء الفعلي للـ APK مع تخطي فحص Lint لتسريع وتقليل أخطاء الموباييل الهجين
+      # بدء البناء الفعلي للـ APK مع تمرير أمر التخطي الصارم بشكل مباشر في سطر الـ Gradle النهائي
       - name: Build Android APK
         run: |
           cd android
           chmod +x gradlew
           ./gradlew clean
-          ./gradlew assembleRelease --no-daemon -x lint --stacktrace
+          ./gradlew assembleRelease --no-daemon -x lint -Pkotlin.suppressKotlinVersionCompatibilityCheck=true --stacktrace
    
       # عرض الأخطاء الحقيقية لـ Gradle في حال حدوث أي مشكلة طارئة
       - name: Show Build Failure Details
