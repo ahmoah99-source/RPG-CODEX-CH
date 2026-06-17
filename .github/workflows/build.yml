@@ -44,7 +44,7 @@ jobs:
           # 3. ربط المسار القديم بالجديد رسمياً داخل الـ node_modules لتفادي خطأ الـ Bundler
           ln -s react-native-worklets-core node_modules/react-native-worklets
 
-      # توليد مجلد الأندرويد ليتلقى إصدار Kotlin المحدث (1.9.25) تلقائياً من الإعدادات
+      # توليد مجلد الأندرويد تلقائياً من الإعدادات
       - name: Expo Prebuild (Generate Android)
         run: npx expo prebuild --platform android --clean
 
@@ -53,7 +53,7 @@ jobs:
           mkdir -p android
           echo "sdk.dir=$ANDROID_HOME" > android/local.properties
 
-      # حقن إعدادات الأمان والذاكرة وإجبار ملفات Gradle الداخلية على كسر حماية فحص الكوتلن
+      # حقن إعدادات الأمان والذاكرة وترقية إصدار الكوتلن في جميع ملفات ومكتبات الأندرويد مجبرة
       - name: Inject Credentials to Gradle
         run: |
           echo -e "\nNODE_BINARY=$(which node)" >> android/gradle.properties
@@ -63,25 +63,27 @@ jobs:
           echo "RELEASE_KEY_PASSWORD=${{ secrets.ANDROID_KEY_PASSWORD }}" >> android/gradle.properties
           echo "org.gradle.jvmargs=-Xmx4608m -XX:MaxMetaspaceSize=512m" >> android/gradle.properties
           
-          # إجبار إعدادات Gradle العامة على التخطي
-          echo "kotlin.suppressKotlinVersionCompatibilityCheck=true" >> android/gradle.properties
-          echo "suppressKotlinVersionCompatibilityCheck=true" >> android/gradle.properties
+          # 1. فرض نسخة الكوتلن داخل الـ gradle.properties الأساسي
+          echo "kotlinVersion=1.9.25" >> android/gradle.properties
+          echo "kotlin_version=1.9.25" >> android/gradle.properties
           
-          # التعديل السحري: البحث داخل ملفات بناء أندرويد وحقن خيار تخطي الفحص إجبارياً في الأكواد
-          find android/ -name "build.gradle" -exec sed -i '/android {/a \ \ \ \ composeOptions {\n\ \ \ \ \ \ \ \ suppressKotlinVersionCompatibilityCheck = true\n\ \ \ \ }' {} \; || true
+          # 2. الحل السحري الشامل: البحث عن أي ملف إعدادات (build.gradle) للمشروع أو المكتبات الفرعية واستبدال إصدار كوتلن بـ 1.9.25
+          find android/ -name "build.gradle" -exec sed -i 's/kotlinVersion = "1.9.24"/kotlinVersion = "1.9.25"/g' {} \; || true
+          find android/ -name "build.gradle" -exec sed -i 's/kotlin_version = "1.9.24"/kotlin_version = "1.9.25"/g' {} \; || true
+          find android/ -name "build.gradle" -exec sed -i 's/ext.kotlinVersion = "1.9.24"/ext.kotlinVersion = "1.9.25"/g' {} \; || true
 
       - name: Decode Keystore File
         run: |
           mkdir -p android/app
           echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/app/my-release-key.keystore
         
-      # بدء البناء الفعلي للـ APK مع تمرير أمر التخطي بشكل صارم ومباشر
+      # بدء البناء الفعلي للـ APK
       - name: Build Android APK
         run: |
           cd android
           chmod +x gradlew
           ./gradlew clean
-          ./gradlew assembleRelease --no-daemon -x lint -Pkotlin.suppressKotlinVersionCompatibilityCheck=true --stacktrace
+          ./gradlew assembleRelease --no-daemon -x lint --stacktrace
    
       # عرض الأخطاء الحقيقية لـ Gradle في حال حدوث أي مشكلة طارئة
       - name: Show Build Failure Details
