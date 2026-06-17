@@ -24,6 +24,10 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
+      # الإضافة الأولى: ربط مسار الـ SDK بنظام البناء
+      - name: Create local.properties
+        run: echo "sdk.dir=$ANDROID_HOME" > android/local.properties
+
       - name: Install dependencies
         run: npm install --legacy-peer-deps
 
@@ -38,7 +42,7 @@ jobs:
           fi
 
       - name: Expo Prebuild (Generate Android)
-        run: npx expo prebuild --platform android
+        run: npx expo prebuild --platform android --clean
 
       - name: Inject Credentials to Gradle
         run: |
@@ -56,16 +60,17 @@ jobs:
           npx expo install react-native-worklets -- --legacy-peer-deps
           npx expo-doctor || true
 
+      # الإضافة الثانية: تعديل أمر البناء (إزالة --quiet وإضافة --stacktrace)
       - name: Build Android APK
         run: |
           cd android
           chmod +x gradlew
           ./gradlew clean
           export NODE_OPTIONS="--max-old-space-size=4096"
-          ./gradlew assembleRelease -x test --no-daemon --no-configuration-cache --no-build-cache --quiet
+          ./gradlew assembleRelease -x test --no-daemon --no-configuration-cache --no-build-cache --stacktrace
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: RPG-CODEX01-APK
+          name: RPG-CODEX-CH-APK
           path: android/app/build/outputs/apk/release/*.apk
