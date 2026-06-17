@@ -60,9 +60,8 @@ jobs:
           cd android
           chmod +x gradlew
           ./gradlew clean
-          # تعطيل الـ Bundler تماماً هنا، وتمرير نسخة النود الحالية
-          ./gradlew assembleRelease -x bundleReleaseJsAndAssets -x test --no-daemon --stacktrace -Dorg.gradle.jvmargs="-Xmx2048m"
-
+          ./gradlew assembleRelease --no-daemon --stacktrace
+   
       - name: Show Build Failure Details
         if: failure()
         run: |
