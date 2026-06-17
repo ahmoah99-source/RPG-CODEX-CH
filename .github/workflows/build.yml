@@ -27,6 +27,7 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
+      # تنظيف بيئة العمل وتثبيت المكتبات مع إضافة المكتبة المفقودة المسببة للخطأ
       - name: Deep Clean and Install
         run: |
           rm -rf node_modules
@@ -35,7 +36,10 @@ jobs:
           rm -f package-lock.json
           npm cache clean --force
           npm install --legacy-peer-deps
+          # حقن المكتبة المطلوبة لـ SQLite أوفلاين لحل مشكلة البناء مباشرة
+          npm install react-native-worklets-core --legacy-peer-deps
 
+      # توليد مجلد الأندرويد أولاً ليتمكن السيرفر من وضع الملفات بداخله بشكل صحيح
       - name: Expo Prebuild (Generate Android)
         run: npx expo prebuild --platform android --clean
 
@@ -44,6 +48,7 @@ jobs:
           mkdir -p android
           echo "sdk.dir=$ANDROID_HOME" > android/local.properties
 
+      # حقن إعدادات الأمان ومفاتيح التوقيع والذاكرة لتفادي توقف السيرفر
       - name: Inject Credentials to Gradle
         run: |
           echo "NODE_BINARY=$(which node)" >> android/gradle.properties
@@ -58,19 +63,19 @@ jobs:
           mkdir -p android/app
           echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/app/my-release-key.keystore
         
+      # بدء البناء الفعلي للـ APK مع تخطي فحص Lint لتسريع وتقليل أخطاء الموباييل الهجين
       - name: Build Android APK
-        env:
-          NODE_ENV: production
         run: |
           cd android
           chmod +x gradlew
           ./gradlew clean
-          NODE_ENV=production ./gradlew assembleRelease --no-daemon -x lint --stacktrace
+          ./gradlew assembleRelease --no-daemon -x lint --stacktrace
    
+      # عرض الأخطاء الحقيقية لـ Gradle في حال حدوث أي مشكلة طارئة
       - name: Show Build Failure Details
         if: failure()
         run: |
-          echo "--- تفاصيل الخطأ الحقيقية من داخل الأندرويد ---"
+          echo "--- تفاصيل الخطأ الحقيقية في حال الفشل ---"
           cd android && ./gradlew tasks --stacktrace || true
           
       - name: Upload APK Artifact
