@@ -6,6 +6,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      # إجبار كل عمليات الـ Node على استخدام نسخة 20
+      ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -27,19 +30,11 @@ jobs:
       - name: Install dependencies
         run: npm install --legacy-peer-deps
 
-      # الحل الجذري: تثبيت المكتبة التي تسبب الخطأ بشكل صريح
       - name: Force Install Reanimated
         run: npm install react-native-reanimated --legacy-peer-deps
 
       - name: Fix Expo Dependencies Mismatch
         run: npx expo install --fix
-
-      - name: Overwrite Reanimated Bug File
-        run: |
-          if [ -f reanimated-fixed.gradle ]; then
-            chmod +w node_modules/react-native-reanimated/android/build.gradle || true
-            cp reanimated-fixed.gradle node_modules/react-native-reanimated/android/build.gradle
-          fi
 
       - name: Expo Prebuild (Generate Android)
         run: npx expo prebuild --platform android --clean
@@ -51,7 +46,7 @@ jobs:
 
       - name: Inject Credentials to Gradle
         run: |
-          echo "NODE_BINARY=/usr/local/bin/node" >> android/gradle.properties
+          echo "NODE_BINARY=$(which node)" >> android/gradle.properties
           echo "RELEASE_STORE_FILE=my-release-key.keystore" >> android/gradle.properties
           echo "RELEASE_STORE_PASSWORD=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" >> android/gradle.properties
           echo "RELEASE_KEY_ALIAS=${{ secrets.ANDROID_KEY_ALIAS }}" >> android/gradle.properties
@@ -59,11 +54,6 @@ jobs:
 
       - name: Decode Keystore File
         run: echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/app/my-release-key.keystore
-
-      - name: Run Expo Doctor Scan
-        run: |
-          npx expo install react-native-worklets -- --legacy-peer-deps
-          npx expo-doctor || true
 
       - name: Verify Bundle
         run: npx expo export -p android --platform android --dev false
@@ -73,10 +63,9 @@ jobs:
           cd android
           chmod +x gradlew
           ./gradlew clean
-          export NODE_OPTIONS="--max-old-space-size=4096"
-          # أضفنا -x bundleReleaseJsAndAssets لمنع الـ Gradle من تشغيل الـ Node
-          ./gradlew assembleRelease -x bundleReleaseJsAndAssets -x test --no-daemon --no-configuration-cache --no-build-cache --stacktrace -Dorg.gradle.jvmargs="-Xmx2048m -XX:MaxMetaspaceSize=512m"
-
+          # تعطيل الـ Bundler تماماً هنا، وتمرير نسخة النود الحالية
+          ./gradlew assembleRelease -x bundleReleaseJsAndAssets -x test --no-daemon --stacktrace -Dorg.gradle.jvmargs="-Xmx2048m"
+          
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
