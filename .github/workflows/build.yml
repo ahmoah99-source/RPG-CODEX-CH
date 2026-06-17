@@ -7,7 +7,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      # إجبار كل عمليات الـ Node على استخدام نسخة 20
       ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
     steps:
       - name: Checkout repository
@@ -36,6 +35,9 @@ jobs:
           npm cache clean --force
           npm install --legacy-peer-deps
 
+      - name: Expo Prebuild (Generate Android)
+        run: npx expo prebuild --platform android --clean
+
       - name: Create local.properties
         run: |
           mkdir -p android
@@ -50,7 +52,9 @@ jobs:
           echo "RELEASE_KEY_PASSWORD=${{ secrets.ANDROID_KEY_PASSWORD }}" >> android/gradle.properties
 
       - name: Decode Keystore File
-        run: echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/app/my-release-key.keystore
+        run: |
+          mkdir -p android/app
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/app/my-release-key.keystore
         
       - name: Build Android APK
         run: |
@@ -62,15 +66,11 @@ jobs:
       - name: Show Build Failure Details
         if: failure()
         run: |
-          if [ -f android/build/reports/problems/problems-report.html ]; then
-            echo "--- تفاصيل الخطأ الحقيقية ---"
-            cat android/build/reports/problems/problems-report.html
-          else
-            echo "ملف التقرير غير موجود، جاري عرض آخر 50 سطر من الـ Gradle Logs:"
-            tail -n 50 android/gradlew.log || echo "لا يوجد سجلات إضافية."
-          fi
+          echo "--- تفاصيل الخطأ الحقيقية ---"
+          find . -name "*.log" -exec cat {} +
           
       - name: Upload APK Artifact
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: RPG-CODEX-CH-APK
