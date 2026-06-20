@@ -72,6 +72,18 @@ export async function getAllClasses(db) {
 export async function getAllLevels(db) {
   return db.getAllAsync('SELECT * FROM levels ORDER BY level');
 }
+// ضيف هنا الدوال الجديدة
+export async function addLevel(db, { level, min_points, multiplier }) {
+  // كود الإضافة
+}
+
+export async function deleteLevel(db, id) {
+  // كود الحذف
+}
+
+export async function updateLevel(db, id, { level, min_points, multiplier }) {
+  // كود التعديل
+}
 
 // ─── Skills ─────────────────────────────────────────────────
 
