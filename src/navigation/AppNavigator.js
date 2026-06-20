@@ -17,6 +17,11 @@ import TalentsListScreen from '../screens/TalentsListScreen';
 import AddTalentScreen from '../screens/AddTalentScreen';
 import RanksListScreen from '../screens/RanksListScreen';
 
+// شاشات الأعراق والسلالات (التعديل الجديد)
+import RacesListScreen from '../screens/RacesListScreen';
+import AddRaceScreen from '../screens/AddRaceScreen';
+import AddLineageScreen from '../screens/AddLineageScreen';
+
 const Stack = createNativeStackNavigator();
 
 const screenOptions = {
@@ -43,6 +48,11 @@ export default function AppNavigator() {
         <Stack.Screen name="TalentsList" component={TalentsListScreen} />
         <Stack.Screen name="AddTalent" component={AddTalentScreen} />
         <Stack.Screen name="RanksList" component={RanksListScreen} />
+
+        {/* شاشات الأعراق والسلالات (الجديد) */}
+        <Stack.Screen name="RacesList" component={RacesListScreen} />
+        <Stack.Screen name="AddRace" component={AddRaceScreen} />
+        <Stack.Screen name="AddLineage" component={AddLineageScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );
