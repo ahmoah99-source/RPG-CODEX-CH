@@ -72,17 +72,33 @@ export async function getAllClasses(db) {
 export async function getAllLevels(db) {
   return db.getAllAsync('SELECT * FROM levels ORDER BY level');
 }
-// ضيف هنا الدوال الجديدة
-export async function addLevel(db, { level, min_points, multiplier }) {
-  // كود الإضافة
+
+export async function addLevel(db, { level, health_multiplier, mana_multiplier, attack_multiplier, defense_multiplier, experience_required }) {
+  await db.runAsync(
+    `INSERT INTO levels (level, health_multiplier, mana_multiplier, attack_multiplier, defense_multiplier, experience_required) VALUES (?, ?, ?, ?, ?, ?)`,
+    [level, health_multiplier, mana_multiplier, attack_multiplier, defense_multiplier, experience_required]
+  );
 }
 
 export async function deleteLevel(db, id) {
-  // كود الحذف
+  await db.runAsync('DELETE FROM levels WHERE id = ?', [id]);
 }
 
-export async function updateLevel(db, id, { level, min_points, multiplier }) {
-  // كود التعديل
+export async function updateLevel(db, id, { level, health_multiplier, mana_multiplier, attack_multiplier, defense_multiplier, experience_required }) {
+  await db.runAsync(
+    `UPDATE levels SET level = ?, health_multiplier = ?, mana_multiplier = ?, attack_multiplier = ?, defense_multiplier = ?, experience_required = ? WHERE id = ?`,
+    [level, health_multiplier, mana_multiplier, attack_multiplier, defense_multiplier, experience_required, id]
+  );
+}
+
+// ─── Talent Ranks ────────────────────────────────────────────
+
+export async function getAllRanks(db) {
+  return await db.getAllAsync('SELECT * FROM talent_ranks ORDER BY id');
+}
+
+export async function addRank(db, { name, icon_url }) {
+  await db.runAsync('INSERT INTO talent_ranks (name, icon_url) VALUES (?, ?)', [name, icon_url]);
 }
 
 // ─── Skills ─────────────────────────────────────────────────
@@ -100,23 +116,41 @@ export async function getSkillsForCharacter(db, characterId) {
 }
 
 export async function addSkillToCharacter(db, characterId, skillId) {
-  await db.runAsync(
-    'INSERT OR IGNORE INTO character_skills (character_id, skill_id) VALUES (?, ?)',
-    [characterId, skillId]
-  );
+  await db.runAsync('INSERT OR IGNORE INTO character_skills (character_id, skill_id) VALUES (?, ?)', [characterId, skillId]);
 }
 
 export async function removeSkillFromCharacter(db, characterId, skillId) {
-  await db.runAsync(
-    'DELETE FROM character_skills WHERE character_id = ? AND skill_id = ?',
-    [characterId, skillId]
-  );
+  await db.runAsync('DELETE FROM character_skills WHERE character_id = ? AND skill_id = ?', [characterId, skillId]);
 }
 
 // ─── Talents ─────────────────────────────────────────────────
 
 export async function getAllTalents(db) {
-  return db.getAllAsync('SELECT * FROM talents ORDER BY name');
+  return await db.getAllAsync(`
+    SELECT t.*, r.name as rank_name, r.icon_url as rank_icon
+    FROM talents t
+    LEFT JOIN talent_ranks r ON t.rank_id = r.id
+    ORDER BY t.name
+  `);
+}
+
+export async function addTalent(db, data) {
+  await db.runAsync(
+    `INSERT INTO talents (
+      name, description, rank_id, icon_url, 
+      strength_bonus, agility_bonus, vitality_bonus, willpower_bonus, 
+      strength_multiplier, agility_multiplier, vitality_multiplier, willpower_multiplier
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      data.name, data.description, data.rank_id, data.icon_url,
+      data.strength_bonus, data.agility_bonus, data.vitality_bonus, data.willpower_bonus,
+      data.strength_multiplier, data.agility_multiplier, data.vitality_multiplier, data.willpower_multiplier
+    ]
+  );
+}
+
+export async function deleteTalent(db, id) {
+  await db.runAsync('DELETE FROM talents WHERE id = ?', [id]);
 }
 
 export async function getTalentsForCharacter(db, characterId) {
@@ -125,20 +159,6 @@ export async function getTalentsForCharacter(db, characterId) {
     JOIN character_talents ct ON t.id = ct.talent_id
     WHERE ct.character_id = ?
   `, [characterId]);
-}
-
-export async function addTalentToCharacter(db, characterId, talentId) {
-  await db.runAsync(
-    'INSERT OR IGNORE INTO character_talents (character_id, talent_id) VALUES (?, ?)',
-    [characterId, talentId]
-  );
-}
-
-export async function removeTalentFromCharacter(db, characterId, talentId) {
-  await db.runAsync(
-    'DELETE FROM character_talents WHERE character_id = ? AND talent_id = ?',
-    [characterId, talentId]
-  );
 }
 
 // ─── Weapons ─────────────────────────────────────────────────
@@ -153,29 +173,4 @@ export async function getWeaponsForCharacter(db, characterId) {
     JOIN character_weapons cw ON w.id = cw.weapon_id
     WHERE cw.character_id = ?
   `, [characterId]);
-}
-
-export async function addWeaponToCharacter(db, characterId, weaponId, isEquipped = 0) {
-  await db.runAsync(
-    'INSERT OR IGNORE INTO character_weapons (character_id, weapon_id, is_equipped) VALUES (?, ?, ?)',
-    [characterId, weaponId, isEquipped ? 1 : 0]
-  );
-}
-
-export async function removeWeaponFromCharacter(db, characterId, weaponId) {
-  await db.runAsync(
-    'DELETE FROM character_weapons WHERE character_id = ? AND weapon_id = ?',
-    [characterId, weaponId]
-  );
-}
-
-export async function equipWeapon(db, characterId, weaponId) {
-  await db.runAsync(
-    'UPDATE character_weapons SET is_equipped = 0 WHERE character_id = ?',
-    [characterId]
-  );
-  await db.runAsync(
-    'UPDATE character_weapons SET is_equipped = 1 WHERE character_id = ? AND weapon_id = ?',
-    [characterId, weaponId]
-  );
 }
