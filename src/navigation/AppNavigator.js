@@ -17,10 +17,11 @@ import TalentsListScreen from '../screens/TalentsListScreen';
 import AddTalentScreen from '../screens/AddTalentScreen';
 import RanksListScreen from '../screens/RanksListScreen';
 
-// شاشات الأعراق والسلالات (التعديل الجديد)
+// شاشات الأعراق والسلالات (مكتملة الآن)
 import RacesListScreen from '../screens/RacesListScreen';
 import AddRaceScreen from '../screens/AddRaceScreen';
 import AddLineageScreen from '../screens/AddLineageScreen';
+import LineageListScreen from '../screens/LineageListScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -49,10 +50,11 @@ export default function AppNavigator() {
         <Stack.Screen name="AddTalent" component={AddTalentScreen} />
         <Stack.Screen name="RanksList" component={RanksListScreen} />
 
-        {/* شاشات الأعراق والسلالات (الجديد) */}
+        {/* شاشات الأعراق والسلالات */}
         <Stack.Screen name="RacesList" component={RacesListScreen} />
         <Stack.Screen name="AddRace" component={AddRaceScreen} />
         <Stack.Screen name="AddLineage" component={AddLineageScreen} />
+        <Stack.Screen name="LineageList" component={LineageListScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );
