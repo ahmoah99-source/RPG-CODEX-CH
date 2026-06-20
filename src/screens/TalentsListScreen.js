@@ -2,7 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { View, Text, FlatList, Pressable } from 'react-native';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { getAllTalents, deleteTalent } from '../database/crud';
+import { getAllTalents } from '../database/crud';
 
 export default function TalentsListScreen() {
   const db = useSQLiteContext();
@@ -19,7 +19,6 @@ export default function TalentsListScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: '#101018', padding: 20 }}>
       <Text style={{ color: '#D4AF37', fontSize: 24, fontWeight: 'bold', marginBottom: 20 }}>إدارة المواهب</Text>
-      
       <FlatList
         data={talents}
         keyExtractor={(item) => item.id.toString()}
@@ -27,25 +26,14 @@ export default function TalentsListScreen() {
           <View style={{ backgroundColor: '#1E1E26', padding: 15, borderRadius: 10, marginBottom: 10 }}>
             <Text style={{ color: '#FFF', fontSize: 18, fontWeight: 'bold' }}>{item.name}</Text>
             <Text style={{ color: '#AAA', fontSize: 12 }}>الرتبة: {item.rank_name}</Text>
-            <Text style={{ color: '#777', fontSize: 12, marginBottom: 10 }}>{item.description}</Text>
-            
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-              <Pressable onPress={async () => {
-                await deleteTalent(db, item.id);
-                const data = await getAllTalents(db);
-                setTalents(data);
-              }}>
-                <Text style={{ color: '#EF4444' }}>حذف</Text>
-              </Pressable>
-            </View>
+            <Text style={{ color: '#777', fontSize: 12 }}>{item.description}</Text>
           </View>
         )}
       />
-
       <Pressable 
-        style={{ backgroundColor: '#D4AF37', padding: 15, borderRadius: 10, alignItems: 'center', marginTop: 20 }}
+        style={{ backgroundColor: '#D4AF37', padding: 15, borderRadius: 10, alignItems: 'center' }}
         onPress={() => navigation.navigate('AddTalent')}>
-        <Text style={{ color: '#000', fontWeight: 'bold' }}>+ إضافة موهبة جديدة</Text>
+        <Text style={{ fontWeight: 'bold' }}>+ إضافة موهبة جديدة</Text>
       </Pressable>
     </View>
   );
