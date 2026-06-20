@@ -1,18 +1,22 @@
-const SCHEMA_SQL = `
--- Races
-CREATE TABLE IF NOT EXISTS races (
+-- ─── 1. الجداول الأساسية ──────────────────────────
+
+CREATE TABLE IF NOT EXISTS lineages (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  name TEXT NOT NULL UNIQUE,
-  description TEXT,
-  strength_bonus INTEGER DEFAULT 0,
-  agility_bonus INTEGER DEFAULT 0,
-  intelligence_bonus INTEGER DEFAULT 0,
-  vitality_bonus INTEGER DEFAULT 0,
-  willpower_bonus INTEGER DEFAULT 0,
-  luck_bonus INTEGER DEFAULT 0
+  name TEXT NOT NULL UNIQUE
 );
 
--- Levels
+CREATE TABLE IF NOT EXISTS races (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  lineage_id INTEGER,
+  strength_bonus INTEGER DEFAULT 0,
+  agility_bonus INTEGER DEFAULT 0,
+  vitality_bonus INTEGER DEFAULT 0,
+  willpower_bonus INTEGER DEFAULT 0,
+  description TEXT,
+  FOREIGN KEY (lineage_id) REFERENCES lineages(id) ON DELETE CASCADE
+);
+
 CREATE TABLE IF NOT EXISTS levels (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   level INTEGER NOT NULL UNIQUE,
@@ -23,32 +27,28 @@ CREATE TABLE IF NOT EXISTS levels (
   experience_required INTEGER DEFAULT 0
 );
 
--- Classes
-CREATE TABLE IF NOT EXISTS classes (
+CREATE TABLE IF NOT EXISTS categories (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT NOT NULL UNIQUE,
   description TEXT,
-  base_health INTEGER DEFAULT 100,
-  base_mana INTEGER DEFAULT 50,
-  base_attack INTEGER DEFAULT 10,
-  base_defense INTEGER DEFAULT 5,
-  preferred_stat TEXT
+  icon_url TEXT,
+  power_multiplier REAL DEFAULT 1.0
 );
 
--- Talent Ranks
+-- ─── 2. جداول المهارات والمواهب ─────────────────────
+
 CREATE TABLE IF NOT EXISTS talent_ranks (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT NOT NULL UNIQUE,
   icon_url TEXT
 );
 
--- Talents
 CREATE TABLE IF NOT EXISTS talents (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT NOT NULL UNIQUE,
   description TEXT,
-  rank_id INTEGER,
   icon_url TEXT,
+  rank_id INTEGER,
   strength_bonus INTEGER DEFAULT 0,
   agility_bonus INTEGER DEFAULT 0,
   vitality_bonus INTEGER DEFAULT 0,
@@ -60,16 +60,6 @@ CREATE TABLE IF NOT EXISTS talents (
   FOREIGN KEY (rank_id) REFERENCES talent_ranks(id)
 );
 
--- Categories
-CREATE TABLE IF NOT EXISTS categories (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  name TEXT NOT NULL UNIQUE,
-  description TEXT,
-  icon_url TEXT,
-  power_multiplier REAL DEFAULT 1.0
-);
-
--- Skills
 CREATE TABLE IF NOT EXISTS skills (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT NOT NULL UNIQUE,
@@ -88,12 +78,35 @@ CREATE TABLE IF NOT EXISTS skills (
   FOREIGN KEY (category_id) REFERENCES categories(id)
 );
 
--- Characters
+-- ─── 3. الأسلحة ──────────────────────────────────
+
+CREATE TABLE IF NOT EXISTS weapons (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL UNIQUE,
+  description TEXT,
+  icon_url TEXT,
+  damage INTEGER DEFAULT 0,
+  type TEXT,
+  min_level INTEGER DEFAULT 1,
+  strength_req INTEGER DEFAULT 0,
+  agility_req INTEGER DEFAULT 0,
+  intelligence_req INTEGER DEFAULT 0,
+  vitality_req INTEGER DEFAULT 0,
+  willpower_req INTEGER DEFAULT 0,
+  luck_req INTEGER DEFAULT 0,
+  base_health INTEGER DEFAULT 0,
+  base_mana INTEGER DEFAULT 0,
+  base_attack INTEGER DEFAULT 0,
+  base_defense INTEGER DEFAULT 0
+);
+
+-- ─── 4. الشخصيات والعلاقات ────────────────────────
+
 CREATE TABLE IF NOT EXISTS characters (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT NOT NULL,
-  race_id INTEGER NOT NULL,
-  class_id INTEGER NOT NULL,
+  race_id INTEGER,
+  category_id INTEGER,
   level_id INTEGER DEFAULT 1,
   base_strength INTEGER DEFAULT 10,
   base_agility INTEGER DEFAULT 10,
@@ -101,50 +114,33 @@ CREATE TABLE IF NOT EXISTS characters (
   base_vitality INTEGER DEFAULT 10,
   base_willpower INTEGER DEFAULT 10,
   base_luck INTEGER DEFAULT 10,
-  created_at TEXT DEFAULT (datetime('now')),
-  updated_at TEXT DEFAULT (datetime('now')),
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (race_id) REFERENCES races(id),
-  FOREIGN KEY (class_id) REFERENCES classes(id),
+  FOREIGN KEY (category_id) REFERENCES categories(id),
   FOREIGN KEY (level_id) REFERENCES levels(level)
 );
 
--- Weapons
-CREATE TABLE IF NOT EXISTS weapons (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  name TEXT NOT NULL UNIQUE,
-  description TEXT,
-  weight REAL DEFAULT 0,
-  attack_bonus INTEGER DEFAULT 0,
-  defense_bonus INTEGER DEFAULT 0,
-  strength_bonus INTEGER DEFAULT 0,
-  agility_bonus INTEGER DEFAULT 0
-);
-
--- Junction Tables
 CREATE TABLE IF NOT EXISTS character_skills (
-  character_id INTEGER NOT NULL,
-  skill_id INTEGER NOT NULL,
+  character_id INTEGER,
+  skill_id INTEGER,
   PRIMARY KEY (character_id, skill_id),
   FOREIGN KEY (character_id) REFERENCES characters(id) ON DELETE CASCADE,
-  FOREIGN KEY (skill_id) REFERENCES skills(id)
+  FOREIGN KEY (skill_id) REFERENCES skills(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS character_talents (
-  character_id INTEGER NOT NULL,
-  talent_id INTEGER NOT NULL,
+  character_id INTEGER,
+  talent_id INTEGER,
   PRIMARY KEY (character_id, talent_id),
   FOREIGN KEY (character_id) REFERENCES characters(id) ON DELETE CASCADE,
-  FOREIGN KEY (talent_id) REFERENCES talents(id)
+  FOREIGN KEY (talent_id) REFERENCES talents(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS character_weapons (
-  character_id INTEGER NOT NULL,
-  weapon_id INTEGER NOT NULL,
-  is_equipped INTEGER DEFAULT 0,
+  character_id INTEGER,
+  weapon_id INTEGER,
+  is_equipped BOOLEAN DEFAULT 0,
   PRIMARY KEY (character_id, weapon_id),
   FOREIGN KEY (character_id) REFERENCES characters(id) ON DELETE CASCADE,
-  FOREIGN KEY (weapon_id) REFERENCES weapons(id)
+  FOREIGN KEY (weapon_id) REFERENCES weapons(id) ON DELETE CASCADE
 );
-`;
-
-export default SCHEMA_SQL;
