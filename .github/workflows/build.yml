@@ -2,7 +2,7 @@ name: Build APK Clean Expo Final
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ feature-new-design ]
 
 jobs:
   build:
