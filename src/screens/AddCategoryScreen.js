@@ -5,22 +5,20 @@ import { addCategory } from '../database/crud';
 
 export default function AddCategoryScreen({ navigation }) {
   const db = useSQLiteContext();
-  const [name, setName] = useState('');
-  const [desc, setDesc] = useState('');
-  const [multiplier, setMultiplier] = useState('0');
+  const [data, setData] = useState({ name: '', description: '', icon_url: '', power_multiplier: '1.0' });
 
   const handleSave = async () => {
-    await addCategory(db, { name, description: desc, icon_url: '', power_multiplier: parseFloat(multiplier) });
+    await addCategory(db, { ...data, power_multiplier: parseFloat(data.power_multiplier) });
     navigation.goBack();
   };
 
   return (
     <ScrollView style={{ padding: 20 }}>
-      <TextInput placeholder="اسم الفئة" value={name} onChangeText={setName} style={{ backgroundColor: '#FFF', padding: 10, marginBottom: 10, borderRadius: 5 }} />
-      <TextInput placeholder="الوصف" value={desc} onChangeText={setDesc} style={{ backgroundColor: '#FFF', padding: 10, marginBottom: 10, borderRadius: 5 }} />
-      <TextInput placeholder="مضاعف القوة" value={multiplier} onChangeText={setMultiplier} keyboardType="numeric" style={{ backgroundColor: '#FFF', padding: 10, marginBottom: 20, borderRadius: 5 }} />
+      <TextInput placeholder="اسم الفئة" onChangeText={(v) => setData({...data, name: v})} style={{backgroundColor: '#FFF', padding: 10, marginBottom: 10}} />
+      <TextInput placeholder="الوصف" onChangeText={(v) => setData({...data, description: v})} style={{backgroundColor: '#FFF', padding: 10, marginBottom: 10}} />
+      <TextInput placeholder="رابط الأيقونة" onChangeText={(v) => setData({...data, icon_url: v})} style={{backgroundColor: '#FFF', padding: 10, marginBottom: 10}} />
+      <TextInput placeholder="مضاعف القوة" keyboardType="numeric" onChangeText={(v) => setData({...data, power_multiplier: v})} style={{backgroundColor: '#FFF', padding: 10, marginBottom: 20}} />
       <Button title="حفظ الفئة" onPress={handleSave} color="#D4AF37" />
     </ScrollView>
   );
 }
-
