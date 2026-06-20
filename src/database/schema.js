@@ -35,6 +35,31 @@ CREATE TABLE IF NOT EXISTS classes (
   preferred_stat TEXT
 );
 
+-- Talent Ranks (الرتب مثل F, S, EX)
+CREATE TABLE IF NOT EXISTS talent_ranks (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL UNIQUE,
+  icon_url TEXT
+);
+
+-- Talents (معدل ليرتبط بالرتبة)
+CREATE TABLE IF NOT EXISTS talents (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL UNIQUE,
+  description TEXT,
+  rank_id INTEGER,
+  icon_url TEXT,
+  strength_bonus INTEGER DEFAULT 0,
+  agility_bonus INTEGER DEFAULT 0,
+  vitality_bonus INTEGER DEFAULT 0,
+  willpower_bonus INTEGER DEFAULT 0,
+  strength_multiplier REAL DEFAULT 0,
+  agility_multiplier REAL DEFAULT 0,
+  vitality_multiplier REAL DEFAULT 0,
+  willpower_multiplier REAL DEFAULT 0,
+  FOREIGN KEY (rank_id) REFERENCES talent_ranks(id)
+);
+
 -- Characters
 CREATE TABLE IF NOT EXISTS characters (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -66,25 +91,6 @@ CREATE TABLE IF NOT EXISTS skills (
   vitality_bonus INTEGER DEFAULT 0,
   willpower_bonus INTEGER DEFAULT 0,
   luck_bonus INTEGER DEFAULT 0
-);
-
--- Talents
-CREATE TABLE IF NOT EXISTS talents (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  name TEXT NOT NULL UNIQUE,
-  description TEXT,
-  strength_bonus INTEGER DEFAULT 0,
-  agility_bonus INTEGER DEFAULT 0,
-  intelligence_bonus INTEGER DEFAULT 0,
-  vitality_bonus INTEGER DEFAULT 0,
-  willpower_bonus INTEGER DEFAULT 0,
-  luck_bonus INTEGER DEFAULT 0,
-  strength_multiplier REAL DEFAULT 0,
-  agility_multiplier REAL DEFAULT 0,
-  intelligence_multiplier REAL DEFAULT 0,
-  vitality_multiplier REAL DEFAULT 0,
-  willpower_multiplier REAL DEFAULT 0,
-  luck_multiplier REAL DEFAULT 0
 );
 
 -- Weapons
