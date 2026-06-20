@@ -35,14 +35,14 @@ CREATE TABLE IF NOT EXISTS classes (
   preferred_stat TEXT
 );
 
--- Talent Ranks (الرتب مثل F, S, EX)
+-- Talent Ranks
 CREATE TABLE IF NOT EXISTS talent_ranks (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT NOT NULL UNIQUE,
   icon_url TEXT
 );
 
--- Talents (معدل ليرتبط بالرتبة)
+-- Talents
 CREATE TABLE IF NOT EXISTS talents (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT NOT NULL UNIQUE,
@@ -58,6 +58,34 @@ CREATE TABLE IF NOT EXISTS talents (
   vitality_multiplier REAL DEFAULT 0,
   willpower_multiplier REAL DEFAULT 0,
   FOREIGN KEY (rank_id) REFERENCES talent_ranks(id)
+);
+
+-- Categories (جدول جديد للفئات)
+CREATE TABLE IF NOT EXISTS categories (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL UNIQUE,
+  description TEXT,
+  icon_url TEXT,
+  power_multiplier REAL DEFAULT 0
+);
+
+-- Skills (تم تعديله ليرتبط بجدول الفئات)
+CREATE TABLE IF NOT EXISTS skills (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL UNIQUE,
+  category_id INTEGER,
+  description TEXT,
+  type TEXT,
+  damage_multiplier REAL DEFAULT 1.0,
+  mana_cost REAL DEFAULT 0,
+  strength_bonus INTEGER DEFAULT 0,
+  agility_bonus INTEGER DEFAULT 0,
+  intelligence_bonus INTEGER DEFAULT 0,
+  vitality_bonus INTEGER DEFAULT 0,
+  willpower_bonus INTEGER DEFAULT 0,
+  luck_bonus INTEGER DEFAULT 0,
+  icon_url TEXT,
+  FOREIGN KEY (category_id) REFERENCES categories(id)
 );
 
 -- Characters
@@ -80,19 +108,6 @@ CREATE TABLE IF NOT EXISTS characters (
   FOREIGN KEY (level_id) REFERENCES levels(level)
 );
 
--- Skills
-CREATE TABLE IF NOT EXISTS skills (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  name TEXT NOT NULL UNIQUE,
-  description TEXT,
-  strength_bonus INTEGER DEFAULT 0,
-  agility_bonus INTEGER DEFAULT 0,
-  intelligence_bonus INTEGER DEFAULT 0,
-  vitality_bonus INTEGER DEFAULT 0,
-  willpower_bonus INTEGER DEFAULT 0,
-  luck_bonus INTEGER DEFAULT 0
-);
-
 -- Weapons
 CREATE TABLE IF NOT EXISTS weapons (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -105,7 +120,7 @@ CREATE TABLE IF NOT EXISTS weapons (
   agility_bonus INTEGER DEFAULT 0
 );
 
--- Junction: character_skills
+-- Junction Tables
 CREATE TABLE IF NOT EXISTS character_skills (
   character_id INTEGER NOT NULL,
   skill_id INTEGER NOT NULL,
@@ -114,7 +129,6 @@ CREATE TABLE IF NOT EXISTS character_skills (
   FOREIGN KEY (skill_id) REFERENCES skills(id)
 );
 
--- Junction: character_talents
 CREATE TABLE IF NOT EXISTS character_talents (
   character_id INTEGER NOT NULL,
   talent_id INTEGER NOT NULL,
@@ -123,7 +137,6 @@ CREATE TABLE IF NOT EXISTS character_talents (
   FOREIGN KEY (talent_id) REFERENCES talents(id)
 );
 
--- Junction: character_weapons
 CREATE TABLE IF NOT EXISTS character_weapons (
   character_id INTEGER NOT NULL,
   weapon_id INTEGER NOT NULL,
