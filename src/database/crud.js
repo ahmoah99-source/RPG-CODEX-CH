@@ -1,20 +1,20 @@
 // ─── Characters ─────────────────────────────────────────────
 
-export async function createCharacter(db, { name, race_id, class_id, base_strength, base_agility, base_intelligence, base_vitality, base_willpower, base_luck }) {
+export async function createCharacter(db, { name, race_id, category_id, base_strength, base_agility, base_intelligence, base_vitality, base_willpower, base_luck }) {
   const result = await db.runAsync(
-    `INSERT INTO characters (name, race_id, class_id, base_strength, base_agility, base_intelligence, base_vitality, base_willpower, base_luck)
+    `INSERT INTO characters (name, race_id, category_id, base_strength, base_agility, base_intelligence, base_vitality, base_willpower, base_luck)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [name, race_id, class_id, base_strength ?? 10, base_agility ?? 10, base_intelligence ?? 10, base_vitality ?? 10, base_willpower ?? 10, base_luck ?? 10]
+    [name, race_id, category_id, base_strength ?? 10, base_agility ?? 10, base_intelligence ?? 10, base_vitality ?? 10, base_willpower ?? 10, base_luck ?? 10]
   );
   return result.lastInsertRowId;
 }
 
 export async function getAllCharacters(db) {
   return db.getAllAsync(`
-    SELECT c.*, r.name as race_name, cl.name as class_name, l.level as level_number
+    SELECT c.*, r.name as race_name, cat.name as category_name, l.level as level_number
     FROM characters c
     JOIN races r ON c.race_id = r.id
-    JOIN classes cl ON c.class_id = cl.id
+    JOIN categories cat ON c.category_id = cat.id
     JOIN levels l ON c.level_id = l.level
     ORDER BY c.updated_at DESC
   `);
@@ -22,14 +22,14 @@ export async function getAllCharacters(db) {
 
 export async function getCharacterById(db, id) {
   return db.getFirstAsync(`
-    SELECT c.*, r.name as race_name, cl.name as class_name, l.level as level_number,
+    SELECT c.*, r.name as race_name, cat.name as category_name, l.level as level_number,
       l.health_multiplier, l.mana_multiplier, l.attack_multiplier, l.defense_multiplier,
       r.strength_bonus as race_str, r.agility_bonus as race_agi, r.intelligence_bonus as race_int,
       r.vitality_bonus as race_vit, r.willpower_bonus as race_wil, r.luck_bonus as race_lck,
-      cl.base_health, cl.base_mana, cl.base_attack, cl.base_defense
+      cat.power_multiplier
     FROM characters c
     JOIN races r ON c.race_id = r.id
-    JOIN classes cl ON c.class_id = cl.id
+    JOIN categories cat ON c.category_id = cat.id
     JOIN levels l ON c.level_id = l.level
     WHERE c.id = ?
   `, [id]);
@@ -51,37 +51,44 @@ export async function updateCharacter(db, id, fields) {
   await db.runAsync(`UPDATE characters SET ${sets.join(', ')} WHERE id = ?`, values);
 }
 
-export async function deleteCharacter(db, id) {
-  await db.runAsync('DELETE FROM characters WHERE id = ?', [id]);
-}
+export async function deleteCharacter(db, id) { await db.runAsync('DELETE FROM characters WHERE id = ?', [id]); }
+
+// ─── Lineages ──────────────────────────────────────────────
+
+export async function addLineage(db, name) { await db.runAsync('INSERT INTO lineages (name) VALUES (?)', [name]); }
+export async function getAllLineages(db) { return await db.getAllAsync('SELECT * FROM lineages ORDER BY name'); }
+export async function deleteLineage(db, id) { await db.runAsync('DELETE FROM lineages WHERE id = ?', [id]); }
 
 // ─── Races ──────────────────────────────────────────────────
 
+export async function addRace(db, r) {
+  await db.runAsync(
+    `INSERT INTO races (name, lineage_id, strength_bonus, agility_bonus, vitality_bonus, willpower_bonus, description) 
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    [r.name, r.lineage_id, r.str, r.agi, r.vit, r.wil, r.desc]
+  );
+}
+
 export async function getAllRaces(db) {
-  return db.getAllAsync('SELECT * FROM races ORDER BY name');
+  return await db.getAllAsync(`
+    SELECT r.*, l.name as lineage_name 
+    FROM races r 
+    LEFT JOIN lineages l ON r.lineage_id = l.id
+    ORDER BY r.name
+  `);
 }
 
-// ─── Classes ────────────────────────────────────────────────
-
-export async function getAllClasses(db) {
-  return db.getAllAsync('SELECT * FROM classes ORDER BY name');
-}
+export async function deleteRace(db, id) { await db.runAsync('DELETE FROM races WHERE id = ?', [id]); }
 
 // ─── Levels ─────────────────────────────────────────────────
 
-export async function getAllLevels(db) {
-  return db.getAllAsync('SELECT * FROM levels ORDER BY level');
-}
+export async function getAllLevels(db) { return db.getAllAsync('SELECT * FROM levels ORDER BY level'); }
 
 export async function addLevel(db, { level, health_multiplier, mana_multiplier, attack_multiplier, defense_multiplier, experience_required }) {
   await db.runAsync(
     `INSERT INTO levels (level, health_multiplier, mana_multiplier, attack_multiplier, defense_multiplier, experience_required) VALUES (?, ?, ?, ?, ?, ?)`,
     [level, health_multiplier, mana_multiplier, attack_multiplier, defense_multiplier, experience_required]
   );
-}
-
-export async function deleteLevel(db, id) {
-  await db.runAsync('DELETE FROM levels WHERE id = ?', [id]);
 }
 
 export async function updateLevel(db, id, { level, health_multiplier, mana_multiplier, attack_multiplier, defense_multiplier, experience_required }) {
@@ -91,25 +98,18 @@ export async function updateLevel(db, id, { level, health_multiplier, mana_multi
   );
 }
 
+export async function deleteLevel(db, id) { await db.runAsync('DELETE FROM levels WHERE id = ?', [id]); }
+
 // ─── Talent Ranks ────────────────────────────────────────────
 
-export async function getAllRanks(db) {
-  return await db.getAllAsync('SELECT * FROM talent_ranks ORDER BY id');
-}
-
-export async function addRank(db, { name, icon_url }) {
-  await db.runAsync('INSERT INTO talent_ranks (name, icon_url) VALUES (?, ?)', [name, icon_url]);
-}
+export async function getAllRanks(db) { return await db.getAllAsync('SELECT * FROM talent_ranks ORDER BY id'); }
+export async function addRank(db, { name, icon_url }) { await db.runAsync('INSERT INTO talent_ranks (name, icon_url) VALUES (?, ?)', [name, icon_url]); }
 
 // ─── Categories ───────────────────────────────────────
 
-export async function getAllCategories(db) {
-  return await db.getAllAsync('SELECT * FROM categories ORDER BY name');
-}
-
-export async function addCategory(db, categoryData) {
-  await db.runAsync('INSERT INTO categories (name, description, icon_url, power_multiplier) VALUES (?, ?, ?, ?)', 
-  [categoryData.name, categoryData.description, categoryData.icon_url, categoryData.power_multiplier]);
+export async function getAllCategories(db) { return await db.getAllAsync('SELECT * FROM categories ORDER BY name'); }
+export async function addCategory(db, { name, description, icon_url, power_multiplier }) {
+  await db.runAsync('INSERT INTO categories (name, description, icon_url, power_multiplier) VALUES (?, ?, ?, ?)', [name, description, icon_url, power_multiplier]);
 }
 
 // ─── Skills ──────────────────────────────────────────
@@ -123,37 +123,9 @@ export async function getAllSkills(db) {
   `);
 }
 
-export async function addSkill(db, skillData) {
-  const query = `
-    INSERT INTO skills (
-      name, category_id, description, icon_url, type, 
-      damage_multiplier, mana_cost, strength_bonus, agility_bonus, 
-      intelligence_bonus, vitality_bonus, willpower_bonus, luck_bonus
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-    
-  const params = [
-    skillData.name, skillData.category_id, skillData.description, skillData.icon_url, skillData.type,
-    skillData.damage_multiplier, skillData.mana_cost, skillData.strength_bonus, skillData.agility_bonus, 
-    skillData.intelligence_bonus, skillData.vitality_bonus, skillData.willpower_bonus, skillData.luck_bonus
-  ];
-  
-  await db.runAsync(query, params);
-}
-
-export async function getSkillsForCharacter(db, characterId) {
-  return db.getAllAsync(`
-    SELECT s.* FROM skills s
-    JOIN character_skills cs ON s.id = cs.skill_id
-    WHERE cs.character_id = ?
-  `, [characterId]);
-}
-
-export async function addSkillToCharacter(db, characterId, skillId) {
-  await db.runAsync('INSERT OR IGNORE INTO character_skills (character_id, skill_id) VALUES (?, ?)', [characterId, skillId]);
-}
-
-export async function removeSkillFromCharacter(db, characterId, skillId) {
-  await db.runAsync('DELETE FROM character_skills WHERE character_id = ? AND skill_id = ?', [characterId, skillId]);
+export async function addSkill(db, s) {
+  await db.runAsync(`INSERT INTO skills (name, category_id, description, icon_url, type, damage_multiplier, mana_cost, strength_bonus, agility_bonus, intelligence_bonus, vitality_bonus, willpower_bonus, luck_bonus) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [s.name, s.category_id, s.description, s.icon_url, s.type, s.damage_multiplier, s.mana_cost, s.strength_bonus, s.agility_bonus, s.intelligence_bonus, s.vitality_bonus, s.willpower_bonus, s.luck_bonus]);
 }
 
 // ─── Talents ─────────────────────────────────────────────────
@@ -167,45 +139,20 @@ export async function getAllTalents(db) {
   `);
 }
 
-export async function addTalent(db, talentData) {
-  const query = `
-    INSERT INTO talents (
-      name, description, icon_url, rank_id, 
-      strength_bonus, agility_bonus, vitality_bonus, willpower_bonus, 
-      strength_multiplier, agility_multiplier, vitality_multiplier, willpower_multiplier
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-    
-  const params = [
-    talentData.name, talentData.description, talentData.icon_url, talentData.rank_id,
-    talentData.strength_bonus, talentData.agility_bonus, talentData.vitality_bonus, talentData.willpower_bonus,
-    talentData.strength_multiplier, talentData.agility_multiplier, talentData.vitality_multiplier, talentData.willpower_multiplier
-  ];
-  
-  await db.runAsync(query, params);
+export async function addTalent(db, t) {
+  await db.runAsync(`INSERT INTO talents (name, description, icon_url, rank_id, strength_bonus, agility_bonus, vitality_bonus, willpower_bonus, strength_multiplier, agility_multiplier, vitality_multiplier, willpower_multiplier) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [t.name, t.description, t.icon_url, t.rank_id, t.strength_bonus, t.agility_bonus, t.vitality_bonus, t.willpower_bonus, t.strength_multiplier, t.agility_multiplier, t.vitality_multiplier, t.willpower_multiplier]);
 }
 
-export async function deleteTalent(db, id) {
-  await db.runAsync('DELETE FROM talents WHERE id = ?', [id]);
-}
-
-export async function getTalentsForCharacter(db, characterId) {
-  return db.getAllAsync(`
-    SELECT t.* FROM talents t
-    JOIN character_talents ct ON t.id = ct.talent_id
-    WHERE ct.character_id = ?
-  `, [characterId]);
-}
+export async function deleteTalent(db, id) { await db.runAsync('DELETE FROM talents WHERE id = ?', [id]); }
 
 // ─── Weapons ─────────────────────────────────────────────────
 
-export async function getAllWeapons(db) {
-  return db.getAllAsync('SELECT * FROM weapons ORDER BY name');
+export async function getAllWeapons(db) { return db.getAllAsync('SELECT * FROM weapons ORDER BY name'); }
+
+export async function addWeapon(db, w) {
+  await db.runAsync(`INSERT INTO weapons (name, description, icon_url, damage, type, min_level, strength_req, agility_req, intelligence_req, vitality_req, willpower_req, luck_req, base_health, base_mana, base_attack, base_defense) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [w.name, w.description, w.icon_url, w.damage, w.type, w.min_level, w.strength_req, w.agility_req, w.intelligence_req, w.vitality_req, w.willpower_req, w.luck_req, w.base_health, w.base_mana, w.base_attack, w.base_defense]);
 }
 
-export async function getWeaponsForCharacter(db, characterId) {
-  return db.getAllAsync(`
-    SELECT w.*, cw.is_equipped FROM weapons w
-    JOIN character_weapons cw ON w.id = cw.weapon_id
-    WHERE cw.character_id = ?
-  `, [characterId]);
-}
+export async function deleteWeapon(db, id) { await db.runAsync('DELETE FROM weapons WHERE id = ?', [id]); }
