@@ -26,15 +26,13 @@ export default function RanksListScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: '#101018', padding: 20 }}>
       <Text style={{ color: '#D4AF37', fontSize: 24, fontWeight: 'bold', marginBottom: 20 }}>إدارة الرتب</Text>
-      
       <View style={{ marginBottom: 20 }}>
-        <TextInput placeholder="اسم الرتبة (مثال: S)" value={newRank.name} onChangeText={(v) => setNewRank({...newRank, name: v})} style={{backgroundColor: '#FFF', padding: 10, borderRadius: 5, marginBottom: 5}} />
-        <TextInput placeholder="رابط الأيقونة (اختياري)" value={newRank.icon_url} onChangeText={(v) => setNewRank({...newRank, icon_url: v})} style={{backgroundColor: '#FFF', padding: 10, borderRadius: 5, marginBottom: 5}} />
+        <TextInput placeholder="اسم الرتبة" value={newRank.name} onChangeText={(v) => setNewRank({...newRank, name: v})} style={{backgroundColor: '#FFF', padding: 10, borderRadius: 5, marginBottom: 5}} />
+        <TextInput placeholder="رابط الأيقونة" value={newRank.icon_url} onChangeText={(v) => setNewRank({...newRank, icon_url: v})} style={{backgroundColor: '#FFF', padding: 10, borderRadius: 5, marginBottom: 5}} />
         <Pressable onPress={handleAddRank} style={{backgroundColor: '#D4AF37', padding: 10, alignItems: 'center', borderRadius: 5}}>
           <Text style={{fontWeight: 'bold'}}>إضافة رتبة</Text>
         </Pressable>
       </View>
-
       <FlatList
         data={ranks}
         keyExtractor={(item) => item.id.toString()}
@@ -47,4 +45,3 @@ export default function RanksListScreen() {
     </View>
   );
 }
-
