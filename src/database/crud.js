@@ -101,10 +101,33 @@ export async function addRank(db, { name, icon_url }) {
   await db.runAsync('INSERT INTO talent_ranks (name, icon_url) VALUES (?, ?)', [name, icon_url]);
 }
 
-// ─── Skills ─────────────────────────────────────────────────
+// ─── Categories (جديد) ───────────────────────────────────────
+
+export async function getAllCategories(db) {
+  return await db.getAllAsync('SELECT * FROM categories ORDER BY name');
+}
+
+export async function addCategory(db, { name, description, icon_url, power_multiplier }) {
+  await db.runAsync('INSERT INTO categories (name, description, icon_url, power_multiplier) VALUES (?, ?, ?, ?)', [name, description, icon_url, power_multiplier]);
+}
+
+// ─── Skills (معدل) ──────────────────────────────────────────
 
 export async function getAllSkills(db) {
-  return db.getAllAsync('SELECT * FROM skills ORDER BY name');
+  return db.getAllAsync(`
+    SELECT s.*, c.name as category_name 
+    FROM skills s 
+    LEFT JOIN categories c ON s.category_id = c.id 
+    ORDER BY s.name
+  `);
+}
+
+export async function addSkill(db, s) {
+  await db.runAsync(
+    `INSERT INTO skills (name, category_id, description, type, damage_multiplier, mana_cost, strength_bonus, agility_bonus, intelligence_bonus, vitality_bonus, willpower_bonus, luck_bonus, icon_url) 
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [s.name, s.category_id, s.description, s.type, s.damage_multiplier, s.mana_cost, s.strength_bonus, s.agility_bonus, s.intelligence_bonus, s.vitality_bonus, s.willpower_bonus, s.luck_bonus, s.icon_url]
+  );
 }
 
 export async function getSkillsForCharacter(db, characterId) {
