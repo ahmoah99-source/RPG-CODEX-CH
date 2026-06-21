@@ -1,5 +1,6 @@
- 1. الجداول الأساسية
+// 1. الجداول الأساسية
 
+export const SCHEMA_SQL = `
 CREATE TABLE IF NOT EXISTS lineages (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT NOT NULL UNIQUE
@@ -35,7 +36,7 @@ CREATE TABLE IF NOT EXISTS categories (
   power_multiplier REAL DEFAULT 1.0
 );
 
-2. جداول المهارات والمواهب
+// 2. جداول المهارات والمواهب
 
 CREATE TABLE IF NOT EXISTS talent_ranks (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -78,7 +79,7 @@ CREATE TABLE IF NOT EXISTS skills (
   FOREIGN KEY (category_id) REFERENCES categories(id)
 );
 
- 3. الأسلحة
+// 3. الأسلحة
 
 CREATE TABLE IF NOT EXISTS weapons (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -100,7 +101,7 @@ CREATE TABLE IF NOT EXISTS weapons (
   base_defense INTEGER DEFAULT 0
 );
 
- 4. الشخصيات والعلاقات
+// 4. الشخصيات والعلاقات
 
 CREATE TABLE IF NOT EXISTS characters (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -144,3 +145,4 @@ CREATE TABLE IF NOT EXISTS character_weapons (
   FOREIGN KEY (character_id) REFERENCES characters(id) ON DELETE CASCADE,
   FOREIGN KEY (weapon_id) REFERENCES weapons(id) ON DELETE CASCADE
 );
+`;
